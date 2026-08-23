@@ -1,3 +1,4 @@
+import { toChatBaseUrl } from "./client.js";
 import { OPENAI_COMPATIBLE_NPM } from "./constants.js";
 function contextAndOutput(cap) {
     const context = cap.context_length > 0 ? cap.context_length : 4096;
@@ -67,7 +68,7 @@ export function toModel(cap, providerID, baseURL, template) {
         providerID,
         api: {
             id: cap.id,
-            url: baseURL,
+            url: toChatBaseUrl(baseURL),
             npm: template?.api.npm ?? OPENAI_COMPATIBLE_NPM,
         },
         name: cap.name || cap.id,

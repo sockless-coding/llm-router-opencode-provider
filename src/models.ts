@@ -1,6 +1,7 @@
 import type { ProviderConfig } from "@opencode-ai/sdk";
 import type { Model } from "@opencode-ai/sdk/v2";
 import type { RouterModelCapability } from "./client.js";
+import { toChatBaseUrl } from "./client.js";
 import { OPENAI_COMPATIBLE_NPM } from "./constants.js";
 
 /**
@@ -83,7 +84,7 @@ export function toModel(cap: RouterModelCapability, providerID: string, baseURL:
 		providerID,
 		api: {
 			id: cap.id,
-			url: baseURL,
+			url: toChatBaseUrl(baseURL),
 			npm: template?.api.npm ?? OPENAI_COMPATIBLE_NPM,
 		},
 		name: cap.name || cap.id,

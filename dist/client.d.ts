@@ -22,6 +22,14 @@ export declare class RouterApiError extends Error {
 }
 export declare function normalizeBaseUrl(url: string): string;
 /**
+ * `@ai-sdk/openai-compatible` builds request URLs as `${baseURL}${path}` with paths like
+ * `/chat/completions` — it does NOT add a `/v1` prefix itself, unlike this file's own
+ * `/v1/models/capabilities` calls. So the URL handed to the AI SDK provider (`options.baseURL`
+ * in the provider config) needs the `/v1` suffix baked in, even though every other use of the
+ * router's base URL in this plugin — including what the user types in — is just the host:port.
+ */
+export declare function toChatBaseUrl(root: string): string;
+/**
  * Calls the router's `GET /v1/models/capabilities` extension endpoint — not the plain OpenAI
  * `/v1/models` list — since that's the only one that reports context size, tool-calling, vision
  * and reasoning-effort support per preset. That richer shape is what lets model capabilities be

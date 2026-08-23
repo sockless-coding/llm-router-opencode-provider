@@ -1,4 +1,5 @@
-import { fetchModelCapabilities, normalizeBaseUrl } from "./client.js";
+import { createOpencodeClient } from "@opencode-ai/sdk/v2/client";
+import { fetchModelCapabilities, normalizeBaseUrl, toChatBaseUrl } from "./client.js";
 import { resolveApiKey, resolveBaseUrl } from "./config.js";
 import { DEFAULT_BASE_URL, ENV_API_KEY, OPENAI_COMPATIBLE_NPM, PROVIDER_ID, PROVIDER_NAME } from "./constants.js";
 import { toModelMap, toProviderConfigModelMap } from "./models.js";
@@ -17,14 +18,20 @@ import { toModelMap, toProviderConfigModelMap } from "./models.js";
  *   (env vars, opencode.json options, or the saved auth), the same way OpenCode's own
  *   Modal/DigitalOcean provider plugins keep their catalogs current.
  */
-export const SocklessLlmRouterPlugin = async () => {
+export const SocklessLlmRouterPlugin = async (ctx) => {
+    // Used only from the `auth` flow below, to write a freshly-entered connection straight into
+    // the live provider config — the `config` hook has no visibility into `ctx.auth`, so without
+    // this, a base URL entered via `opencode auth login` would never reach the AI SDK provider
+    // that actually sends chat requests (it would keep using whatever `config` last resolved from
+    // env vars / opencode.json, silently ignoring what the user just typed).
+    const client = createOpencodeClient({ baseUrl: ctx.serverUrl.toString(), throwOnError: true });
     const hooks = {
         config: async (cfg) => {
             cfg.provider ??= {};
             const existing = cfg.provider[PROVIDER_ID] ?? {};
             const baseURL = resolveBaseUrl(existing.options);
             const apiKey = resolveApiKey(existing.options);
-            const options = { ...existing.options, baseURL };
+            const options = { ...existing.options, baseURL: toChatBaseUrl(baseURL) };
             if (apiKey) {
                 options.apiKey = apiKey;
             }
@@ -92,6 +99,23 @@ export const SocklessLlmRouterPlugin = async () => {
                         }
                         catch {
                             // Ignored — see above.
+                        }
+                        try {
+                            // Write straight into the live provider config so chat requests use this
+                            // connection immediately — see the comment on `client` above for why this
+                            // can't just rely on `metadata` being picked up automatically.
+                            const options = { baseURL: toChatBaseUrl(baseURL) };
+                            if (apiKey) {
+                                options.apiKey = apiKey;
+                            }
+                            await client.global.config.update({
+                                config: { provider: { [PROVIDER_ID]: { options } } },
+                            });
+                        }
+                        catch {
+                            // The connection is still saved via the returned auth result below even if
+                            // this live-config write fails (e.g. an older server without this endpoint);
+                            // it'll take effect on the next restart via the `config` hook instead.
                         }
                         return {
                             type: "success",

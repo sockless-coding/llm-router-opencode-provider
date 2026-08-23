@@ -1,6 +1,6 @@
 {
 	"name": "opencode-sockless-llm-router",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "OpenCode provider plugin for Sockless LLM Router — point it at the router's API endpoint and every model is discovered automatically, with context size, tool-calling, vision and reasoning support carried over.",
 	"type": "module",
 	"main": "./dist/index.js",

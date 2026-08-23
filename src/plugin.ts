@@ -22,13 +22,6 @@ import { toModelMap, toProviderConfigModelMap } from "./models.js";
  *   Modal/DigitalOcean provider plugins keep their catalogs current.
  */
 export const SocklessLlmRouterPlugin: Plugin = async (ctx) => {
-	// Used only from the `auth` flow below, to write a freshly-entered connection straight into
-	// the live provider config — the `config` hook has no visibility into `ctx.auth`, so without
-	// this, a base URL entered via `opencode auth login` would never reach the AI SDK provider
-	// that actually sends chat requests (it would keep using whatever `config` last resolved from
-	// env vars / opencode.json, silently ignoring what the user just typed).
-	const client = createOpencodeClient({ baseUrl: ctx.serverUrl.toString(), throwOnError: true });
-
 	const hooks: Hooks = {
 		config: async (cfg) => {
 			cfg.provider ??= {};
@@ -108,12 +101,18 @@ export const SocklessLlmRouterPlugin: Plugin = async (ctx) => {
 						}
 						try {
 							// Write straight into the live provider config so chat requests use this
-							// connection immediately — see the comment on `client` above for why this
-							// can't just rely on `metadata` being picked up automatically.
+							// connection immediately — the `config` hook has no visibility into
+							// `ctx.auth`, so without this a base URL entered here would only ever reach
+							// `provider.models` (used for model discovery) and never the AI SDK provider
+							// that actually sends chat requests. Built lazily, here, rather than once at
+							// the top of the plugin: `ctx.serverUrl` isn't necessarily populated every
+							// time OpenCode invokes this plugin (e.g. while just listing providers), and
+							// touching it unconditionally there took the whole plugin down with it.
 							const options: Record<string, unknown> = { baseURL: toChatBaseUrl(baseURL) };
 							if (apiKey) {
 								options.apiKey = apiKey;
 							}
+							const client = createOpencodeClient({ baseUrl: ctx.serverUrl.toString(), throwOnError: true });
 							await client.global.config.update({
 								config: { provider: { [PROVIDER_ID]: { options } } },
 							});

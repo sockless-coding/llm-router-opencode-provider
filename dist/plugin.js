@@ -1,5 +1,5 @@
 import { createOpencodeClient } from "@opencode-ai/sdk/v2/client";
-import { fetchModelCapabilities, normalizeBaseUrl, toChatBaseUrl } from "./client.js";
+import { fetchModelCapabilities, stripApiVersion, toChatBaseUrl } from "./client.js";
 import { resolveApiKey, resolveBaseUrl } from "./config.js";
 import { DEFAULT_BASE_URL, ENV_API_KEY, OPENAI_COMPATIBLE_NPM, PROVIDER_ID, PROVIDER_NAME } from "./constants.js";
 import { toModelMap, toProviderConfigModelMap } from "./models.js";
@@ -84,7 +84,7 @@ export const SocklessLlmRouterPlugin = async (ctx) => {
                         },
                     ],
                     async authorize(input = {}) {
-                        const baseURL = normalizeBaseUrl(input.baseURL || DEFAULT_BASE_URL);
+                        const baseURL = stripApiVersion(input.baseURL || DEFAULT_BASE_URL);
                         const apiKey = input.apiKey?.trim() || undefined;
                         try {
                             // Best-effort reachability check — a router that's simply not running yet

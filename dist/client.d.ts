@@ -22,11 +22,21 @@ export declare class RouterApiError extends Error {
 }
 export declare function normalizeBaseUrl(url: string): string;
 /**
+ * Strips any trailing `/v1` segment(s), however many. `options.baseURL` is round-tripped through
+ * this plugin's own config: it's written as the `/v1`-suffixed value {@link toChatBaseUrl}
+ * produces (see below), then read back on the next run as if it were the plain root. Without
+ * this, that read-back would compound another `/v1` on every restart — this makes reading it
+ * back idempotent regardless of how many times that's already happened.
+ */
+export declare function stripApiVersion(url: string): string;
+/**
  * `@ai-sdk/openai-compatible` builds request URLs as `${baseURL}${path}` with paths like
  * `/chat/completions` — it does NOT add a `/v1` prefix itself, unlike this file's own
  * `/v1/models/capabilities` calls. So the URL handed to the AI SDK provider (`options.baseURL`
  * in the provider config) needs the `/v1` suffix baked in, even though every other use of the
  * router's base URL in this plugin — including what the user types in — is just the host:port.
+ * Stripping first makes this idempotent no matter how many times it's already been applied to
+ * `root` in a previous run.
  */
 export declare function toChatBaseUrl(root: string): string;
 /**

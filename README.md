@@ -16,16 +16,20 @@ Three plugin hooks work together:
 
 ## Install
 
-This plugin isn't published to npm yet — install it straight from GitHub by adding it to your `opencode.json` plugin list:
+Add the package to your `opencode.json` plugin list:
 
 ```json
 {
 	"$schema": "https://opencode.ai/config.json",
-	"plugin": ["github:sockless-coding/llm-router-opencode-provider"]
+	"plugin": ["opencode-sockless-llm-router"]
 }
 ```
 
-OpenCode installs it automatically the next time it runs. (Once/if this is published to npm, `"opencode-sockless-llm-router"` will work the same way, without the `github:` prefix.)
+OpenCode installs it automatically the next time it runs. Or install it globally from the CLI:
+
+```sh
+opencode plugin --global opencode-sockless-llm-router
+```
 
 ## Configure
 
